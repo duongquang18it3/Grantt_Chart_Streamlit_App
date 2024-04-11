@@ -39,7 +39,7 @@ if 'tasks' not in st.session_state:
 if authentication_status:
     st.sidebar.title(f"Welcome {name}")
    
-    
+    authenticator.logout("Logout", "sidebar")
 
     if username == 'admin':
         projects = load_projects(username)
