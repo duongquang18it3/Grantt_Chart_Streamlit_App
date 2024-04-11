@@ -95,19 +95,13 @@ if authentication_status:
 else:
     st.error("Username/password is incorrect")
 
-def show_logout_button():
-    if st.sidebar.button('Log out'):
-        st.session_state['logged_in'] = False
-        if 'username' in st.session_state:
-            del st.session_state['username']
-        st.experimental_rerun()
+
 
 def main():
     if 'logged_in' not in st.session_state:
         st.session_state['logged_in'] = False
 
-    if st.session_state['logged_in']:
-        show_logout_button()
+
 
 if __name__ == "__main__":
     main()
