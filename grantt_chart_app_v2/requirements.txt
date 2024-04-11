@@ -1,5 +1,0 @@
-streamlit
-pandas
-plotly
-pathlib
-streamlit-authenticator==0.1.5
