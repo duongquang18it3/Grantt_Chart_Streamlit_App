@@ -30,7 +30,7 @@ with file_path.open("rb") as file:
     hashed_passwords = pickle.load(file)
 
 # Setup authenticator
-authenticator = stauth.Authenticate(name, username, hashed_passwords, "login_form", "112233", cookie_expiry_days=30)
+authenticator = stauth.Authenticate(name, username, hashed_passwords, "login_form1", "111111", cookie_expiry_days=30)
 name, authentication_status, username = authenticator.login('Login', 'main')
 
 # Initialize or clear session state
