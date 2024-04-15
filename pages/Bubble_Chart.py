@@ -1,8 +1,8 @@
 import pandas as pd
 import plotly.express as px
+import plotly.graph_objects as go
 import streamlit as st
 import os
-
 # Define paths to datasets
 current_dir = os.getcwd()
 dataset_dir = os.path.join(current_dir, "dataset")
@@ -18,6 +18,18 @@ selected_dataset = st.sidebar.selectbox('Select Dataset:', list(dataset_options.
 
 # Load the selected dataset
 df = pd.read_csv(dataset_options[selected_dataset])
+def calculate_sizeref(data_size, desired_max_bubble_area=60**2, max_data_points=100):
+    """
+    Adjust the bubble sizes based on the count of displayed data points to ensure
+    the bubbles grow larger as fewer points are displayed.
+    """
+    base_sizeref = 3 * max(data_size) / (desired_max_bubble_area)  # Base reference for max bubble size
+    
+    current_data_points = len(data_size)
+    scaling_factor = max_data_points / max(current_data_points, 1)  # Prevent division by zero
+    adjusted_sizeref = base_sizeref / scaling_factor  # Inverse relationship
+    
+    return adjusted_sizeref
 
 # Configure options and process data based on the selected dataset
 if selected_dataset == 'Supermarket Sales':
@@ -68,13 +80,70 @@ if analysis_type == 'View Data Table':
     st.write(df)
 
 elif analysis_type == 'Occurrences Bubble Chart':
-    fig = px.scatter(df, x='Keyword', y='Occurrences', size='Occurrences', color='Keyword', hover_name='Keyword', size_max=60, title="Occurrences of AI Keywords")
-    st.plotly_chart(fig, use_container_width=True)
+    # Get the global minimum and maximum occurrences to set the bounds for input fields
+    global_min_occurrences, global_max_occurrences = df['Occurrences'].min(), df['Occurrences'].max()
 
-elif analysis_type == 'Top 10 Keywords by Occurrence':  # New chart type handling
-    top_keywords = df.nlargest(10, 'Occurrences')  # Extract the top 10 keywords by occurrence
-    fig = px.scatter(top_keywords, x='Keyword', y='Occurrences', size='Occurrences', color='Keyword', hover_name='Keyword', size_max=60, title="Top 10 AI Keywords by Occurrence")
-    st.plotly_chart(fig, use_container_width=True)    
+    # Create two numeric input boxes for minimum and maximum occurrences
+    min_occurrences = st.sidebar.number_input('Minimum Occurrences', min_value=int(global_min_occurrences), 
+                                              max_value=int(global_max_occurrences), value=int(global_min_occurrences))
+    max_occurrences = st.sidebar.number_input('Maximum Occurrences', min_value=int(global_min_occurrences), 
+                                              max_value=int(global_max_occurrences), value=int(global_max_occurrences))
+
+    # Filter the DataFrame based on the input range
+    filtered_df = df[(df['Occurrences'] >= min_occurrences) & (df['Occurrences'] <= max_occurrences)]
+    if not filtered_df.empty:
+        sizeref = calculate_sizeref(filtered_df['Occurrences'].tolist(), desired_max_bubble_area=60**2, max_data_points=len(df))
+        
+        fig = go.Figure(data=[go.Scatter(
+            x=filtered_df['Keyword'],
+            y=filtered_df['Occurrences'],
+            mode='markers',
+            marker=dict(
+                size=filtered_df['Occurrences'],
+                color=filtered_df['Occurrences'],  # Apply color scale based on occurrences
+                sizemode='area',
+                sizeref=sizeref,
+                sizemin=4,
+                showscale=True
+            ),
+            text=filtered_df['Keyword']
+        )])
+        fig.update_layout(title='Occurrences of AI Keywords by Input Range',
+                          xaxis_title='Keyword',
+                          yaxis_title='Occurrences',
+                          coloraxis=dict(colorscale='Viridis'),
+                          hovermode='closest')
+        st.plotly_chart(fig, use_container_width=True)
+    else:
+        st.write("No data falls within the selected range. Please adjust the input values.")
+
+
+elif analysis_type == 'Top 10 Keywords by Occurrence':
+    top_keywords = df.nlargest(10, 'Occurrences')
+    sizeref = calculate_sizeref(top_keywords['Occurrences'].tolist(), desired_max_bubble_area=60**2, max_data_points=10)
+
+    fig = go.Figure(data=[go.Scatter(
+        x=top_keywords['Keyword'],
+        y=top_keywords['Occurrences'],
+        mode='markers',
+        marker=dict(
+            size=top_keywords['Occurrences'],
+            color=top_keywords['Occurrences'],
+            sizemode='area',
+            sizeref=sizeref,
+            sizemin=4,
+            showscale=True
+        ),
+        text=top_keywords['Keyword']  # Display keyword on hover
+    )])
+    fig.update_layout(
+        title='Top 10 AI Keywords by Occurrence',
+        xaxis_title='Keyword',
+        yaxis_title='Occurrences',
+        coloraxis=dict(colorscale='Viridis'),
+        hovermode='closest'
+    )
+    st.plotly_chart(fig, use_container_width=True)
 
 elif analysis_type == 'Total Revenue by Product Line':
     fig = px.scatter(total_sales, x='Product line', y='Total', size='Total', color='Product line', hover_name='Product line', size_max=60, title="Total Revenue by Product Line")
