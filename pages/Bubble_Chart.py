@@ -38,7 +38,8 @@ if selected_dataset == 'Supermarket Sales':
 elif selected_dataset == 'AI Invoice Keywords':
     analysis_options = (
         'View Data Table',
-        'Occurrences Bubble Chart'
+        'Occurrences Bubble Chart',
+        'Top 10 Keywords by Occurrence'  # New option added
     )
     # No extra processing needed for this simple dataset
 
@@ -69,7 +70,11 @@ if analysis_type == 'View Data Table':
 elif analysis_type == 'Occurrences Bubble Chart':
     fig = px.scatter(df, x='Keyword', y='Occurrences', size='Occurrences', color='Keyword', hover_name='Keyword', size_max=60, title="Occurrences of AI Keywords")
     st.plotly_chart(fig, use_container_width=True)
-    
+
+elif analysis_type == 'Top 10 Keywords by Occurrence':  # New chart type handling
+    top_keywords = df.nlargest(10, 'Occurrences')  # Extract the top 10 keywords by occurrence
+    fig = px.scatter(top_keywords, x='Keyword', y='Occurrences', size='Occurrences', color='Keyword', hover_name='Keyword', size_max=60, title="Top 10 AI Keywords by Occurrence")
+    st.plotly_chart(fig, use_container_width=True)    
 
 elif analysis_type == 'Total Revenue by Product Line':
     fig = px.scatter(total_sales, x='Product line', y='Total', size='Total', color='Product line', hover_name='Product line', size_max=60, title="Total Revenue by Product Line")
