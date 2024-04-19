@@ -96,21 +96,15 @@ if not df_cabinets.empty:
     df_cabinets['document_count'] = df_cabinets['documents_url'].apply(fetch_cabinet_documents)
 
     # Configure columns
-    col1, col2 = st.columns([3, 7])  # Adjust the column widths as needed
+    
     df_cabinets['label_with_count'] = df_cabinets['label'] + ': ' + df_cabinets['document_count'].astype(str)
-    with col1:
-        cabinet_choice = st.selectbox("Choose a Cabinet:", df_cabinets['label'])
-        documents_url = df_cabinets.loc[df_cabinets['label'] == cabinet_choice, 'documents_url'].values[0]
-        if st.button('Go to Documents'):
-            # Open the URL in a new tab
-            js = f"window.open('{documents_url}')"
-            st.components.v1.html(f"<script>{js}</script>", height=0)
+    
 
-    with col2:
+    
         # Treemap with document counts
-        fig_cabinets = px.treemap(df_cabinets, path=['label_with_count'], values='document_count', title="Cabinet Document Distribution")
-        fig_cabinets.update_layout(width=600)
-        st.plotly_chart(fig_cabinets)
+    fig_cabinets = px.treemap(df_cabinets, path=['label_with_count'], values='document_count', title="Cabinet Document Distribution")
+    
+    st.plotly_chart(fig_cabinets)
         
 # Function to fetch document count for each tag
 def fetch_tag_documents(url):
