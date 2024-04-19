@@ -40,7 +40,7 @@ if not df_documents.empty:
     type_counts = df_documents['type_label'].value_counts().reset_index()
     type_counts.columns = ['type_label', 'count']
 
-    st.header('Document Types', divider='rainbow')
+    st.header('Document Types')
 
     # Create a bubble chart
     fig_bubble = px.scatter(type_counts, x='type_label', y='count',
@@ -91,7 +91,7 @@ def fetch_cabinet_documents(url):
 
 # Prepare cabinet data with document counts
 if not df_cabinets.empty:
-    st.header('Cabinets', divider='rainbow')
+    st.header('Cabinets')
     df_cabinets['documents_url'] = df_cabinets.apply(lambda x: x['documents_url'], axis=1)
     df_cabinets['document_count'] = df_cabinets['documents_url'].apply(fetch_cabinet_documents)
 
@@ -125,7 +125,7 @@ def fetch_tag_documents(url):
 df_tags = pd.DataFrame(fetch_data(urls['tags']))
 
 if not df_tags.empty:
-    st.header('Document Tags', divider='rainbow')
+    st.header('Document Tags')
     # Add document count to each tag
     df_tags['document_count'] = df_tags['documents_url'].apply(fetch_tag_documents)
     df_tags['color'] = df_tags.apply(lambda x: x['color'], axis=1)
