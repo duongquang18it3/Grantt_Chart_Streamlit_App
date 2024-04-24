@@ -122,8 +122,8 @@ if not df_documents.empty:
     fig.update_layout(xaxis_title='Date', yaxis_title='Cumulative Document Count', legend_title=option[:-16])
     st.plotly_chart(fig)
 
-#CABINET
-# Function to fetch data from an API
+#CABINETS
+
 def fetch_data(endpoint_url):
     all_data = []
     while endpoint_url:
@@ -175,7 +175,7 @@ if not df_cabinets.empty:
 
     # Treemap with document counts
     fig_cabinets = px.treemap(df_cabinet_documents, path=[px.Constant("All Cabinets"), 'full_path'], values='document_count', title="Cabinet Document Distribution")
-    st.plotly_chart(fig_cabinets) 
+    st.plotly_chart(fig_cabinets)
         
 # Function to fetch document count for each tag
 def fetch_tag_documents(url):
