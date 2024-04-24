@@ -137,46 +137,46 @@ def fetch_data(endpoint_url):
             break
     return all_data
 
-# Recursive function to fetch document count for each cabinet and its children
-def fetch_cabinet_documents_recursive(cabinet):
-    document_count = 0
-    # Fetch documents for the current cabinet
-    if cabinet['documents_url']:
-        documents_data = requests.get(cabinet['documents_url'], auth=auth)
-        if documents_data.status_code == 200:
-            documents = documents_data.json()
-            document_count += documents['count']
-    
-    # Stop counting if the cabinet has children
-    if cabinet.get('children'):
-        return document_count
-    
-    # Recursively fetch documents for children
-    for child in cabinet.get('children', []):
-        document_count += fetch_cabinet_documents_recursive(child)
-    
-    return document_count
+# Function to fetch direct document count for a cabinet
+def fetch_direct_document_count(documents_url):
+    response = requests.get(documents_url, auth=auth)
+    if response.status_code == 200:
+        documents = response.json()
+        return documents['count']
+    else:
+        st.error(f"Failed to fetch documents from {documents_url}: Status {response.status_code}")
+        return 0
 
 # Load data from APIs
 df_cabinets = pd.DataFrame(fetch_data(urls['cabinets']))
 
-# Prepare cabinet data with document counts
+# Prepare cabinet data with direct document counts
 if not df_cabinets.empty:
     st.header('Cabinets')
     cabinet_data = []
     for index, row in df_cabinets.iterrows():
-        document_count = fetch_cabinet_documents_recursive(row)
+        document_count = fetch_direct_document_count(row['documents_url'])  # Fetch direct documents only
+        full_path = row['full_path'].split(' / ')
+        if len(full_path) > 1:
+            parent_name = full_path[-2]  # Gets the second last element as parent for children
+        else:
+            parent_name = "All Cabinets"  # Default parent for top-level cabinets
+
         cabinet_data.append({
-            'full_path': row['full_path'],
+            'parent': parent_name,
+            'label': row['label'],
             'document_count': document_count
         })
 
     df_cabinet_documents = pd.DataFrame(cabinet_data)
 
     # Treemap with document counts
-    fig_cabinets = px.treemap(df_cabinet_documents, path=[px.Constant("All Cabinets"), 'full_path'], values='document_count', title="Cabinet Document Distribution")
+    fig_cabinets = px.treemap(df_cabinet_documents, path=[px.Constant("All Cabinets"), 'parent', 'label'], values='document_count',
+                              title="Cabinet Document Distribution", hover_data={'label': True, 'document_count': True})
     st.plotly_chart(fig_cabinets)
-        
+
+
+#TAGS        
 # Function to fetch document count for each tag
 def fetch_tag_documents(url):
     response = requests.get(url, auth=auth)
