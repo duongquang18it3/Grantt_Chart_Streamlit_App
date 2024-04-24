@@ -125,7 +125,6 @@ if not df_documents.empty:
 
 
 # Function to fetch data from an API
-# Function to fetch data from an API
 def fetch_data(endpoint_url):
     all_data = []
     while endpoint_url:
@@ -133,16 +132,17 @@ def fetch_data(endpoint_url):
         if response.status_code == 200:
             data = response.json()
             all_data.extend(data['results'])
-            endpoint_url = data['next']  
+            endpoint_url = data['next']  # Update the URL to the next page URL
         else:
             st.error(f"Failed to fetch data from {endpoint_url}: Status {response.status_code}")
             break
     return all_data
 
 # Recursive function to fetch document count for each cabinet and its children
-def fetch_cabinet_documents_recursive(cabinet):
+def fetch_cabinet_documents_recursive(cabinet, parent_path=""):
     document_count = 0
-    full_path = cabinet['full_path']
+    # Update full_path for the current cabinet
+    full_path = f"{parent_path} / {cabinet['label']}"
     
     # Fetch documents for the current cabinet
     if cabinet['documents_url']:
@@ -153,7 +153,7 @@ def fetch_cabinet_documents_recursive(cabinet):
     
     # Recursively fetch documents for children
     for child in cabinet.get('children', []):
-        child_count, child_path = fetch_cabinet_documents_recursive(child)
+        child_count, child_path = fetch_cabinet_documents_recursive(child, full_path)
         document_count += child_count
     
     return document_count, full_path
@@ -161,7 +161,7 @@ def fetch_cabinet_documents_recursive(cabinet):
 # Load data from APIs
 df_cabinets = pd.DataFrame(fetch_data(urls['cabinets']))
 
-# Prepare cabinet data with document counts and full paths
+# Prepare cabinet data with document counts
 if not df_cabinets.empty:
     st.header('Cabinets')
     cabinet_data = []
