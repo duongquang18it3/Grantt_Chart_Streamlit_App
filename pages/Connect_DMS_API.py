@@ -193,19 +193,31 @@ def fetch_all_data(endpoint_url):
             break
     return all_data
 
-# Fetch index data
-indexes = fetch_all_data(index_url)
-node_counts = []
-
-# Fetch node data for each index and document counts for each node
-for index in indexes:
-    nodes = fetch_all_data(index['nodes_url'])
+# Recursive function to fetch documents for nodes and sub-nodes
+def fetch_documents(node_url):
+    nodes = fetch_all_data(node_url)
+    node_documents = []
     for node in nodes:
         documents = fetch_all_data(node['documents_url'])
+        document_count = len(documents)
+        node_documents.append({
+            'Node Value': node['value'],
+            'Document Count': document_count
+        })
+        # Recursively fetch for child nodes
+        if node.get('children_url'):
+            node_documents.extend(fetch_documents(node['children_url']))
+    return node_documents
+
+# Fetch index data and process each index
+node_counts = []
+for index in fetch_all_data(index_url):
+    node_documents = fetch_documents(index['nodes_url'])
+    for node_doc in node_documents:
         node_counts.append({
             'Index Label': index['label'],
-            'Node Value': node['value'],
-            'Document Count': len(documents)
+            'Node Value': node_doc['Node Value'],
+            'Document Count': node_doc['Document Count']
         })
 
 # Convert to DataFrame
@@ -213,8 +225,7 @@ df_node_counts = pd.DataFrame(node_counts)
 
 # Create a stacked bar chart
 st.header('Document Count by Index and Node Value')
-fig = px.bar(df_node_counts, x='Index Label', y='Document Count', color='Node Value', text='Document Count',
-              barmode='stack')
+fig = px.bar(df_node_counts, x='Index Label', y='Document Count', color='Node Value', text='Document Count', barmode='stack')
 fig.update_traces(texttemplate='%{text}', textposition='outside')
 st.plotly_chart(fig)
 
