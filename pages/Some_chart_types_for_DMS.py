@@ -125,6 +125,7 @@ if not df_documents.empty:
 
 
 # Function to fetch data from an API
+# Function to fetch data from an API
 def fetch_data(endpoint_url):
     all_data = []
     while endpoint_url:
@@ -132,7 +133,7 @@ def fetch_data(endpoint_url):
         if response.status_code == 200:
             data = response.json()
             all_data.extend(data['results'])
-            endpoint_url = data['next']  # Update the URL to the next page URL
+            endpoint_url = data['next']  
         else:
             st.error(f"Failed to fetch data from {endpoint_url}: Status {response.status_code}")
             break
@@ -141,6 +142,8 @@ def fetch_data(endpoint_url):
 # Recursive function to fetch document count for each cabinet and its children
 def fetch_cabinet_documents_recursive(cabinet):
     document_count = 0
+    full_path = cabinet['full_path']
+    
     # Fetch documents for the current cabinet
     if cabinet['documents_url']:
         documents_data = requests.get(cabinet['documents_url'], auth=auth)
@@ -150,21 +153,22 @@ def fetch_cabinet_documents_recursive(cabinet):
     
     # Recursively fetch documents for children
     for child in cabinet.get('children', []):
-        document_count += fetch_cabinet_documents_recursive(child)
+        child_count, child_path = fetch_cabinet_documents_recursive(child)
+        document_count += child_count
     
-    return document_count
+    return document_count, full_path
 
 # Load data from APIs
 df_cabinets = pd.DataFrame(fetch_data(urls['cabinets']))
 
-# Prepare cabinet data with document counts
+# Prepare cabinet data with document counts and full paths
 if not df_cabinets.empty:
     st.header('Cabinets')
     cabinet_data = []
     for index, row in df_cabinets.iterrows():
-        document_count = fetch_cabinet_documents_recursive(row)
+        document_count, full_path = fetch_cabinet_documents_recursive(row)
         cabinet_data.append({
-            'full_path': row['full_path'],
+            'full_path': full_path,
             'document_count': document_count
         })
 
