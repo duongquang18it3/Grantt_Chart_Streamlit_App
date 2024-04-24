@@ -124,29 +124,54 @@ if not df_documents.empty:
 
 
 
-def fetch_cabinet_documents(url):
-    response = requests.get(url, auth=auth)
-    if response.status_code == 200:
-        data = response.json()
-        return data['count']
-    else:
-        return 0  # Or handle error appropriately
+# Function to fetch data from an API
+def fetch_data(endpoint_url):
+    all_data = []
+    while endpoint_url:
+        response = requests.get(endpoint_url, auth=auth)
+        if response.status_code == 200:
+            data = response.json()
+            all_data.extend(data['results'])
+            endpoint_url = data['next']  # Update the URL to the next page URL
+        else:
+            st.error(f"Failed to fetch data from {endpoint_url}: Status {response.status_code}")
+            break
+    return all_data
+
+# Recursive function to fetch document count for each cabinet and its children
+def fetch_cabinet_documents_recursive(cabinet):
+    document_count = 0
+    # Fetch documents for the current cabinet
+    if cabinet['documents_url']:
+        documents_data = requests.get(cabinet['documents_url'], auth=auth)
+        if documents_data.status_code == 200:
+            documents = documents_data.json()
+            document_count += documents['count']
+    
+    # Recursively fetch documents for children
+    for child in cabinet.get('children', []):
+        document_count += fetch_cabinet_documents_recursive(child)
+    
+    return document_count
+
+# Load data from APIs
+df_cabinets = pd.DataFrame(fetch_data(urls['cabinets']))
 
 # Prepare cabinet data with document counts
 if not df_cabinets.empty:
     st.header('Cabinets')
-    df_cabinets['documents_url'] = df_cabinets.apply(lambda x: x['documents_url'], axis=1)
-    df_cabinets['document_count'] = df_cabinets['documents_url'].apply(fetch_cabinet_documents)
+    cabinet_data = []
+    for index, row in df_cabinets.iterrows():
+        document_count = fetch_cabinet_documents_recursive(row)
+        cabinet_data.append({
+            'full_path': row['full_path'],
+            'document_count': document_count
+        })
 
-    # Configure columns
-    
-    df_cabinets['label_with_count'] = df_cabinets['label'] + ': ' + df_cabinets['document_count'].astype(str)
-    
+    df_cabinet_documents = pd.DataFrame(cabinet_data)
 
-    
-        # Treemap with document counts
-    fig_cabinets = px.treemap(df_cabinets, path=['label_with_count'], values='document_count', title="Cabinet Document Distribution")
-    
+    # Treemap with document counts
+    fig_cabinets = px.treemap(df_cabinet_documents, path=[px.Constant("All Cabinets"), 'full_path'], values='document_count', title="Cabinet Document Distribution")
     st.plotly_chart(fig_cabinets)
         
 # Function to fetch document count for each tag
@@ -230,5 +255,4 @@ fig.update_traces(texttemplate='%{text}', textposition='outside')
 st.plotly_chart(fig)
 
 #Document Growth Over Time:
-
 
