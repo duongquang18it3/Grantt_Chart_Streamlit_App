@@ -122,8 +122,7 @@ if not df_documents.empty:
     fig.update_layout(xaxis_title='Date', yaxis_title='Cumulative Document Count', legend_title=option[:-16])
     st.plotly_chart(fig)
 
-
-
+#CABINET
 # Function to fetch data from an API
 def fetch_data(endpoint_url):
     all_data = []
@@ -132,7 +131,7 @@ def fetch_data(endpoint_url):
         if response.status_code == 200:
             data = response.json()
             all_data.extend(data['results'])
-            endpoint_url = data['next']  # Update the URL to the next page URL
+            endpoint_url = data['next']
         else:
             st.error(f"Failed to fetch data from {endpoint_url}: Status {response.status_code}")
             break
@@ -147,6 +146,10 @@ def fetch_cabinet_documents_recursive(cabinet):
         if documents_data.status_code == 200:
             documents = documents_data.json()
             document_count += documents['count']
+    
+    # Stop counting if the cabinet has children
+    if cabinet.get('children'):
+        return document_count
     
     # Recursively fetch documents for children
     for child in cabinet.get('children', []):
@@ -172,7 +175,7 @@ if not df_cabinets.empty:
 
     # Treemap with document counts
     fig_cabinets = px.treemap(df_cabinet_documents, path=[px.Constant("All Cabinets"), 'full_path'], values='document_count', title="Cabinet Document Distribution")
-    st.plotly_chart(fig_cabinets)
+    st.plotly_chart(fig_cabinets) 
         
 # Function to fetch document count for each tag
 def fetch_tag_documents(url):
