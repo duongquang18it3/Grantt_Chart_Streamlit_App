@@ -123,7 +123,7 @@ if not df_documents.empty:
     st.plotly_chart(fig)
 
 
-#CABINET
+
 # Function to fetch data from an API
 def fetch_data(endpoint_url):
     all_data = []
@@ -174,8 +174,6 @@ if not df_cabinets.empty:
     fig_cabinets = px.treemap(df_cabinet_documents, path=[px.Constant("All Cabinets"), 'full_path'], values='document_count', title="Cabinet Document Distribution")
     st.plotly_chart(fig_cabinets)
         
-
-#TAGS
 # Function to fetch document count for each tag
 def fetch_tag_documents(url):
     response = requests.get(url, auth=auth)
