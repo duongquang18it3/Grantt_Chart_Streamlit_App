@@ -40,8 +40,7 @@ option = st.sidebar.selectbox(
     ("Document Type",  "Cabinet Document Distribution", "Document Tags", "Document Count by Index and Node Value")
 )
 
-with open('style.css') as f:
-    st.markdown(f'<style>{f.read()}</style>',unsafe_allow_html=True)
+
 
 # Main dashboard layout based on sidebar selection
 # Depending on the option, display appropriate visuals
